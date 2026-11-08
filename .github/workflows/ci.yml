@@ -1,0 +1,62 @@
+name: Go CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Check formatting
+        run: |
+          files="$(gofmt -l .)"
+          if [ -n "$files" ]; then
+            echo "Unformatted files:"
+            echo "$files"
+            exit 1
+          fi
+
+      - name: Static analysis
+        run: go vet ./...
+
+      - name: Unit tests with race detector and coverage
+        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Enforce 80% total coverage
+        run: |
+          go tool cover -func=coverage.out | awk '
+            /^total:/ {
+              gsub(/%/, "", $3)
+              printf "Total coverage: %.1f%%\n", $3
+              found = 1
+              if ($3 + 0 < 80) exit 1
+            }
+            END { if (!found) exit 1 }
+          '
+
+      - name: Build packages
+        run: go build ./...
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
