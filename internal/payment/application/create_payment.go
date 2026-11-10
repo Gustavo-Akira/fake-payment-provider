@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/Gustavo-Akira/fake-payment-provider/internal/payment/domain"
@@ -44,6 +45,9 @@ func NewCreatePaymentUseCase(paymentRepository output.PaymentRepository) *Create
 func (uc *CreatePaymentUseCaseImpl) Execute(ctx context.Context, input CreatePaymentCommand) (CreatePaymentOutput, error) {
 
 	if existingPayment, err := uc.paymentRepository.FindByIdempotencyKey(ctx, input.IdempotencyKey); err == nil && existingPayment != nil {
+		if existingPayment.Amount() != input.Amount || existingPayment.Currency() != input.Currency || existingPayment.ReferenceID() != input.ReferenceID {
+			return CreatePaymentOutput{}, errors.New("Idempotency Error")
+		}
 		return convertToCreatePaymentOutput(existingPayment), nil
 	}
 

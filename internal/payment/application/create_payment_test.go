@@ -70,7 +70,7 @@ func TestCreatePaymentUseCase(t *testing.T) {
 
 	t.Run("should return saved payment instead of create new when already exists one with idempotency key", func(t *testing.T) {
 		input := CreatePaymentCommand{
-			Amount:         1000,
+			Amount:         3000,
 			Currency:       "USD",
 			IdempotencyKey: "existing-key",
 			ReferenceID:    "ref-123",
@@ -95,6 +95,25 @@ func TestCreatePaymentUseCase(t *testing.T) {
 		}
 		if output.Status != string(domain.StatusPending) {
 			t.Errorf("expected status %s, got %s", domain.StatusPending, output.Status)
+		}
+	})
+
+	t.Run("should return idempotency error instead of creating new when already exists one with idempotency key and different parameters", func(t *testing.T) {
+		input := CreatePaymentCommand{
+			Amount:         2000,
+			Currency:       "USD",
+			IdempotencyKey: "existing-key",
+			ReferenceID:    "ref-123",
+		}
+
+		_, err := useCase.Execute(context.Background(), input)
+		if err == nil {
+			t.Fatalf("expected idempotency error, got no error")
+		}
+
+		expectedErrMsg := "Idempotency Error"
+		if err.Error() != expectedErrMsg {
+			t.Errorf("expected error message %q, got %q", expectedErrMsg, err.Error())
 		}
 	})
 
