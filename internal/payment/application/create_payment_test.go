@@ -111,7 +111,7 @@ func TestCreatePaymentUseCase(t *testing.T) {
 			t.Fatalf("expected idempotency error, got no error")
 		}
 
-		expectedErrMsg := "Idempotency Error"
+		expectedErrMsg := "idempotency Error"
 		if err.Error() != expectedErrMsg {
 			t.Errorf("expected error message %q, got %q", expectedErrMsg, err.Error())
 		}

@@ -46,7 +46,7 @@ func (uc *CreatePaymentUseCaseImpl) Execute(ctx context.Context, input CreatePay
 
 	if existingPayment, err := uc.paymentRepository.FindByIdempotencyKey(ctx, input.IdempotencyKey); err == nil && existingPayment != nil {
 		if existingPayment.Amount() != input.Amount || existingPayment.Currency() != input.Currency || existingPayment.ReferenceID() != input.ReferenceID {
-			return CreatePaymentOutput{}, errors.New("Idempotency Error")
+			return CreatePaymentOutput{}, errors.New("idempotency Error")
 		}
 		return convertToCreatePaymentOutput(existingPayment), nil
 	}
